@@ -8,7 +8,7 @@ using System.Web.Mvc;
 
 namespace EmployeePayrollMVCC.Controllers
 {
-    [Authorize]
+    
     public class EmployeeController : Controller
     {
         public ApplicationDbContext db = new ApplicationDbContext();
@@ -18,6 +18,11 @@ namespace EmployeePayrollMVCC.Controllers
             return View();
         }
 
+        /// <summary>
+        /// Registers the employee.
+        /// </summary>
+        /// <param name="employee">The employee.</param>
+        /// <returns></returns>
         [HttpPost]
         public ActionResult RegisterEmployee(RegisterEmpRequestModel employee)
         {
@@ -35,6 +40,11 @@ namespace EmployeePayrollMVCC.Controllers
             return View("Register", employee);
         }
 
+        /// <summary>
+        /// Registers the employee service.
+        /// </summary>
+        /// <param name="employee">The employee.</param>
+        /// <returns></returns>
         public bool RegisterEmployeeService(RegisterEmpRequestModel employee)
         {
             try
@@ -70,12 +80,20 @@ namespace EmployeePayrollMVCC.Controllers
             }
         }
 
+        /// <summary>
+        /// Employees the list.
+        /// </summary>
+        /// <returns></returns>
         public ActionResult EmployeeList()
         {
             List<EmployeeViewModel> list = GetAllEmployee();
             return View(list);
         }
 
+        /// <summary>
+        /// Gets all employee.
+        /// </summary>
+        /// <returns></returns>
         public List<EmployeeViewModel> GetAllEmployee()
         {
             try
@@ -96,6 +114,79 @@ namespace EmployeePayrollMVCC.Controllers
                                                 }).ToList<EmployeeViewModel>();
                 return list;
             }catch(Exception e)
+            {
+                throw e;
+            }
+        }
+        /// <summary>
+        /// retrive the data from database and display in the edit webpage
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        public ActionResult Edit(EmployeeViewModel item)
+        {
+            RegisterEmpRequestModel emp = new RegisterEmpRequestModel
+            {
+                EmpId = item.EmpId,
+                Name = item.Name,
+                Gender = item.Gender,
+                Department = item.Department,
+                SalaryId = item.SalaryId.ToString(),
+                StartDate = item.StartDate,
+                Description = item.Description
+            };
+
+            return View(emp);
+        }
+        /// <summary>
+        /// Edits the employee.
+        /// </summary>
+        /// <param name="employee">The employee.</param>
+        /// <returns></returns>
+        public ActionResult EditEmployee(RegisterEmpRequestModel employee)
+        {
+            bool result = EditEmployeeService(employee);
+            if (result == true)
+            {
+                List<EmployeeViewModel> list = GetAllEmployee();
+                return View("EmployeeList", list);
+            }
+            else
+            {
+                return View("Error");
+            }
+        }
+
+        /// <summary>
+        /// Edits the employee service.
+        /// </summary>
+        /// <param name="employee">The employee.</param>
+        /// <returns></returns>
+        public bool EditEmployeeService(RegisterEmpRequestModel employee)
+        {
+            try
+            {
+                int departmentId = db.Departments.Where(x => x.DepartmentName== employee.Department).Select(x => x.DeptId).FirstOrDefault();
+
+                Employee emp = db.Employees.Find(employee.EmpId);
+                emp.Name = employee.Name;
+                emp.SalaryId = Convert.ToInt32(employee.SalaryId);
+                emp.StartDate = employee.StartDate;
+                emp.Description = employee.Description;
+                emp.Gender = employee.Gender;
+                emp.DepartmentId = departmentId;
+
+                int result = db.SaveChanges();
+                if (result > 0)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            catch (Exception e)
             {
                 throw e;
             }
